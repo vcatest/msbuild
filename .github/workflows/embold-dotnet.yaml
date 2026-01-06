@@ -1,4 +1,4 @@
-name: Build and Analyze With DotNet
+name: Build and Analyze
 
 on:
   push:
@@ -14,16 +14,18 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    # We still setup .NET 8 as a baseline, but the build script may install its own requirements (like .NET 10)
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x # Matches VS 2022 requirements
+        dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore MSBuild.sln
-
-    - name: Build
-      run: dotnet build MSBuild.sln --no-restore --configuration Release
+    # REPLACED: Use the repo's build script instead of manual 'dotnet restore/build'
+    # This fixes the MSB4044 error by ensuring all build properties and preview SDKs are set up correctly.
+    - name: Build Repository
+      run: |
+        chmod +x build.sh
+        ./build.sh --configuration Release --ci
 
     - name: Embold Analyse
       run: |
