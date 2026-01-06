@@ -37,3 +37,7 @@ jobs:
         curl --silent --location --request GET "${{ vars.EMBOLD_URL_CS}}/api/v1/repositories/a8238eb805e404219cc4763d72ea3471/scans/config/download" --header "Authorization:Bearer ${{ secrets.EMBOLD_TOKEN_CS}}" -o repository-configuration.json
         echo "Download repository configuration file done"
         ./browserstack-codequality-scanner/bin/embold-scanner analyse -u ${{ vars.EMBOLD_URL_CS}} -t ${{ secrets.EMBOLD_TOKEN_CS}} -r a8238eb805e404219cc4763d72ea3471 -b . -d ./embold-data -c ./repository-configuration.json -v
+    - name: Corona path
+      run: | 
+        cat .embold/corona/csharpCore/linux/x64/Config/log4net.config
+      
