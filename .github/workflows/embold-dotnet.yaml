@@ -39,5 +39,5 @@ jobs:
         ./browserstack-codequality-scanner/bin/embold-scanner analyse -u ${{ vars.EMBOLD_URL_CS}} -t ${{ secrets.EMBOLD_TOKEN_CS}} -r a8238eb805e404219cc4763d72ea3471 -b . -d ./embold-data -c ./repository-configuration.json -v
     - name: Corona path
       run: | 
-        cat .embold/corona/csharpCore/linux/x64/Config/log4net.config
+        cat .embold/embold_scanner_home/corona/csharpCore/linux/x64/Config/log4net.config
       
