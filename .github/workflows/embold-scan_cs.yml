@@ -17,7 +17,6 @@ jobs:
         apt-get update
         apt-get install curl wget libssl1.1 -y 
     
-    # NEW STEP: Install Java (OpenJDK 11 is a common, stable version)
     - name: Install Java for Embold Scanner
       run: |
         apt-get install openjdk-11-jre -y
@@ -35,3 +34,11 @@ jobs:
         curl --silent --location --request GET "${{ vars.EMBOLD_URL_CS}}/api/v1/repositories/fcc4ae8cc1094dd9bfa23dfc0a3ed2df/scans/config/download" --header "Authorization:Bearer ${{ secrets.EMBOLD_TOKEN_CS}}" -o repository-configuration.json
         echo "Download repository configuration file done"
         ./browserstack-codequality-scanner/bin/embold-scanner analyse -u ${{ vars.EMBOLD_URL_CS}} -t ${{ secrets.EMBOLD_TOKEN_CS}} -r fcc4ae8cc1094dd9bfa23dfc0a3ed2df -b . -d ./embold-data -c ./repository-configuration.json -v
+
+    - name: Archive logs and binaries
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: parsed_files
+        path: |
+          /__w/DevToys/DevToys/embold-data/**/*.txt
