@@ -13,43 +13,36 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        fetch-depth: 0  # Shallow clones can disable some SonarCloud features
+        fetch-depth: 0
 
-    # 1. Install Java 17 (Required for SonarScanner)
-    # We use the official action because it sets JAVA_HOME automatically
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: 17
         distribution: 'microsoft'
 
-    # 2. Install .NET 10 (Handling Pre-release/Preview)
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.0.x'
         include-prerelease: true
 
-    # 3. Install SonarScanner (With NuGet Fix)
     - name: Install SonarScanner
       run: |
         dotnet tool install --global dotnet-sonarscanner --add-source https://api.nuget.org/v3/index.json
-        # explicitly add the tools path to GITHUB_PATH just in case
         echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-    # 4. Start SonarScanner
     - name: SonarScanner Begin
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: "96776fa54a595ed6a86cfb00e41cf351b5af5c0e"
       run: |
         dotnet sonarscanner begin /k:"vcatest_msbuild" /o:"vcatest" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io/"
 
-    # 5. Build Project (Targeting .NET 10)
+    ## FIXED: Added -m:1 and -p:UseSharedCompilation=false to prevent Roslyn compiler crash
     - name: Build
-      run: dotnet build -p:EnableWindowsTargeting=true
+      run: dotnet build -p:EnableWindowsTargeting=true -m:1 -p:UseSharedCompilation=false
 
-    # 6. End SonarScanner
     - name: SonarScanner End
       env:
         SONAR_TOKEN: "96776fa54a595ed6a86cfb00e41cf351b5af5c0e"
