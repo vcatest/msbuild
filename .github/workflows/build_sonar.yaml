@@ -1,9 +1,9 @@
-name: SonarQube
+name: .NET
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
@@ -21,8 +21,7 @@ jobs:
     ## UPDATED: SonarScanner requires Java 17+. Embold will also work fine with this.
     - name: Install Java for Embold & SonarScanner
       run: |
-        dotnet tool install --global dotnet-sonarscanner --add-source https://api.nuget.org/v3/index.json
-        echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+        apt-get install openjdk-17-jre -y 
         
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -39,14 +38,10 @@ jobs:
     - name: SonarScanner Begin
       # Note: Replace "your_organization_key" with your actual SonarCloud organization key
       run: dotnet sonarscanner begin /k:"vcatest_msbuild" /o:"vcatest" /d:sonar.token="96776fa54a595ed6a86cfb00e41cf351b5af5c0e" /d:sonar.host.url="https://sonarcloud.io/"
-
-    ## NEW: Build the project (Required for Sonar analysis)
-    - name: Build Project
-      run: dotnet build -p:EnableWindowsTargeting=true -p:PostBuildEvent=
       
     ## NEW: Build the project (Required for Sonar analysis)
-   ## - name: Build Project
-    ##  run: dotnet build # Add your .sln or .csproj path here if it's not in the root directory
+    - name: Build Project
+      run: dotnet build # Add your .sln or .csproj path here if it's not in the root directory
       
     ## NEW: End SonarScanner (Upload analysis to Sonar server)
     - name: SonarScanner End
