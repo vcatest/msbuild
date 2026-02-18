@@ -9,35 +9,48 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # BEST PRACTICE: Use the official .NET SDK image instead of ubuntu:20.04
-    container: mcr.microsoft.com/dotnet/sdk:9.0
     
     steps:
     - uses: actions/checkout@v4
-    
-    ## SonarScanner requires Java 17+. The SDK image is Debian-based, so we use apt-get.
-    - name: Install Java 17 (Required for SonarScanner)
-      run: |
-        apt-get update
-        apt-get install -y openjdk-17-jre
-        
-    ## Note: "Setup .NET" step is REMOVED because it is already inside the container.
+      with:
+        fetch-depth: 0  # Shallow clones can disable some SonarCloud features
 
-    ## FIXED: Install SonarScanner using the official NuGet feed explicitly
+    # 1. Install Java 17 (Required for SonarScanner)
+    # We use the official action because it sets JAVA_HOME automatically
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'microsoft'
+
+    # 2. Install .NET 10 (Handling Pre-release/Preview)
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+        include-prerelease: true
+
+    # 3. Install SonarScanner (With NuGet Fix)
     - name: Install SonarScanner
       run: |
         dotnet tool install --global dotnet-sonarscanner --add-source https://api.nuget.org/v3/index.json
+        # explicitly add the tools path to GITHUB_PATH just in case
         echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-    ## Start SonarScanner
+    # 4. Start SonarScanner
     - name: SonarScanner Begin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: "96776fa54a595ed6a86cfb00e41cf351b5af5c0e"
       run: |
-        dotnet sonarscanner begin /k:"vcatest_msbuild" /o:"vcatest" /d:sonar.token="96776fa54a595ed6a86cfb00e41cf351b5af5c0e" /d:sonar.host.url="https://sonarcloud.io/"
+        dotnet sonarscanner begin /k:"vcatest_msbuild" /o:"vcatest" /d:sonar.token="${{ env.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io/"
 
-    ## Build the project
-    - name: Build Project
+    # 5. Build Project (Targeting .NET 10)
+    - name: Build
       run: dotnet build -p:EnableWindowsTargeting=true
 
-    ## End SonarScanner
+    # 6. End SonarScanner
     - name: SonarScanner End
-      run: dotnet sonarscanner end /d:sonar.token="96776fa54a595ed6a86cfb00e41cf351b5af5c0e"
+      env:
+        SONAR_TOKEN: "96776fa54a595ed6a86cfb00e41cf351b5af5c0e"
+      run: dotnet sonarscanner end /d:sonar.token="${{ env.SONAR_TOKEN }}"
